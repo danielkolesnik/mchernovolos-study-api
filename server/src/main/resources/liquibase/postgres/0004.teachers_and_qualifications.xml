@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+	xmlns="http://www.liquibase.org/xml/ns/dbchangelog/1.7"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog/1.7
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-1.7.xsd">
+
+	<changeSet id="0004-create-teachers-table" author="Daniel A. Kolesnik">
+
+		<sql>
+			CREATE TABLE qualifications
+			(
+			id serial,
+			description character varying (65) DEFAULT NULL,
+			name character varying(24) NOT NULL,
+			CONSTRAINT pk_qualifications PRIMARY KEY (id)
+			);
+			CREATE UNIQUE INDEX ui_qualifications_name ON qualifications (name);
+
+			INSERT INTO qualifications (id, name, description) VALUES (1, 'TEACHER', 'Aspirant degree in Science');
+			INSERT INTO qualifications (id, name, description) VALUES (2, 'PHD', 'Candidate of Science');
+			INSERT INTO qualifications (id, name, description) VALUES (3, 'DOCTOR', 'Doctor of Science');
+			INSERT INTO qualifications (id, name, description) VALUES (4, 'PROFESSOR', 'Professor of Science');
+
+
+			CREATE TABLE teachers
+			(
+				id serial,
+				email character varying (128) NOT NULL,
+				first_name character varying (128) DEFAULT NULL,
+				full_name varchar(255) DEFAULT '',
+				last_name character varying (128) DEFAULT NULL,
+				created_at timestamp without time zone NOT NULL DEFAULT now(),
+				qualified_at timestamp without time zone,
+				requalification_at timestamp without time zone,
+				updated_at timestamp without time zone NOT NULL DEFAULT now(),
+				fired boolean default false,
+				qualification_expired boolean default false,
+				qualification_id integer NOT NULL,
+				is_deleted boolean NOT NULL DEFAULT false,
+				CONSTRAINT pk_teachers PRIMARY KEY (id),
+				CONSTRAINT fk_teachers_to_qualifications FOREIGN KEY (qualification_id)
+					REFERENCES qualifications (id) MATCH SIMPLE
+					ON UPDATE CASCADE
+					ON DELETE CASCADE
+			);
+			CREATE UNIQUE INDEX ui_teachers_email ON teachers (email);
+			CREATE UNIQUE INDEX ui_teachers_qualification ON teachers (id, qualification_id);
+
+			CREATE INDEX ui_teachers_qualification_id ON teachers (qualification_id);
+			CREATE INDEX i_teachers_first_name ON teachers (first_name);
+			CREATE INDEX i_teachers_last_name ON teachers (last_name);
+			CREATE INDEX i_teachers_created_at ON teachers (created_at);
+			CREATE INDEX i_teachers_updated_at ON teachers (updated_at);
+
+			CREATE INDEX i_teacher_full_name ON teachers (full_name);
+			CREATE INDEX i_teacher_full_name_deleted ON teachers (full_name, is_deleted);
+			CREATE INDEX i_teacher_deleted ON teachers (is_deleted);
+
+			INSERT INTO teachers (id, email, full_name, qualification_id) VALUES (1, 'luda@email.com', 'Lyudmila Anatolyeva', 2);
+			INSERT INTO teachers (id, email, full_name, qualification_id) VALUES (2, 'zhora@email.com', 'Zhorik Vartanov', 4);
+
+		</sql>
+
+		<rollback>
+			<dropTable tableName="qualifications"/>
+			<dropTable tableName="teachers"/>
+		</rollback>
+	</changeSet>
+
+</databaseChangeLog>
